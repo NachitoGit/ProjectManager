@@ -56,5 +56,9 @@ Capa de pruebas unitarias robusta utilizando **xUnit**, **Moq** y **FluentAssert
     dotnet test
     ```
 
+## 🐳 Ejecución con Docker
+Solo ejecuta docker-compose up --build y la API estará lista en http://localhost:5000/swagger.
+
 ---
+
 Creado con fines de portfolio por Ignacio Merlo - 2026.
