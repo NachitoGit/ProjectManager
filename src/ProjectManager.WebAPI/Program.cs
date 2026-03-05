@@ -1,0 +1,88 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using ProjectManager.Domain.Entities;
+using ProjectManager.Domain.Interfaces;
+using ProjectManager.Infrastructure.Persistence.Repositories;
+using ProjectManager.Infrastructure.Persistence;
+using ProjectManager.Application.Features.Projects.Commands.CreateProject;
+using ProjectManager.Application.Mappings;
+using FluentValidation;
+using ProjectManager.Application;
+using MediatR;
+using ProjectManager.Application.Pipelines;
+using ProjectManager.Application.Services;
+using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore.Filters;
+using ProjectManager.Infrastructure;
+using ProjectManager.WebAPI.Middlewares;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer", // Indica que usaremos Bearer tokens
+        Description = "Ingresa 'Bearer ' [espacio] y luego tu token. Ejemplo: Bearer eyJhbGciOi..."
+    });
+
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
+});
+
+
+
+var app = builder.Build();
+
+// **SEED DATA**
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        await ApplicationDbContextSeed.SeedEssentialsAsync(userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+// **FIN DE SECCIÓN DE SEED DATA**
+
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication(); 
+app.UseAuthorization();  
+
+app.MapControllers();
+app.Run();
