@@ -2,6 +2,7 @@
 using MediatR;
 using ProjectManager.Domain.Constants;
 using ProjectManager.Domain.Entities;
+using ProjectManager.Domain.Exceptions;
 using ProjectManager.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.CreateTaskItem
 
             if (!canManage)
             {
-                throw new UnauthorizedAccessException("No tienes permiso para crear tareas en este proyecto.");
+                throw new ForbiddenAccessException();
             }
 
             var projectExists = await _unitOfWork.Projects.GetByIdAsync(request.ProjectId);

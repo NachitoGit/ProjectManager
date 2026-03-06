@@ -65,7 +65,6 @@ namespace ProjectManager.Infrastructure.Persistence
 
         private async Task DispatchDomainEvents(CancellationToken cancellationToken)
         {
-            // Buscamos todas las entidades que tengan eventos acumulados
             var entitiesWithEvents = ChangeTracker.Entries<BaseEntity>()
                 .Select(e => e.Entity)
                 .Where(e => e.DomainEvents.Any())
@@ -74,11 +73,10 @@ namespace ProjectManager.Infrastructure.Persistence
             foreach (var entity in entitiesWithEvents)
             {
                 var events = entity.DomainEvents.ToArray();
-                entity.ClearDomainEvents(); // Limpiamos para evitar duplicados
+                entity.ClearDomainEvents();
 
                 foreach (var domainEvent in events)
                 {
-                    // Publicamos el evento para que cualquier Handler interesado lo reciba
                     await _mediator.Publish(domainEvent, cancellationToken);
                 }
             }

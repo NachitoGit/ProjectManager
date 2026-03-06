@@ -3,6 +3,7 @@ using FluentAssertions;
 using Moq;
 using ProjectManager.Application.Features.TaskItems.Commands.CreateTaskItem;
 using ProjectManager.Domain.Entities;
+using ProjectManager.Domain.Exceptions;
 using ProjectManager.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -64,6 +65,39 @@ namespace ProjectManager.Application.UnitTests.Features.Tasks.Commands.CreateTas
             var result = await _handler.Handle(command, CancellationToken.None);
 
             result.Should().BeGreaterThan(0);
+        }
+
+        [Fact]
+        public async Task Handle_UserWithoutPermission_ShouldThrowForbiddenAccessException()
+        {
+            var projectId = 1;
+            var command = new CreateTaskItemCommand
+            {
+                ProjectId = projectId,
+                Title = "Intento hack"
+            };
+            var userId = "user-sin-permisos";
+
+            var fakeProject = new Project
+            {
+                Id = projectId,
+                Name = "Test privado",
+            };
+            _unitOfWorkMock.Setup(x => x.Projects.GetByIdAsync(projectId))
+                .ReturnsAsync(fakeProject);
+
+            _currentUserServiceMock.Setup(x => x.UserId).Returns(userId);
+
+            _permissionServiceMock.Setup(x => x.CanManageTasksAsync(projectId, userId))
+                .ReturnsAsync(false);
+
+
+            Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
+
+            await act.Should().ThrowAsync<ForbiddenAccessException>();
+
+            _unitOfWorkMock.Verify(x => x.Tasks.AddAsync(It.IsAny<TaskItem>()), Times.Never);
+            _unitOfWorkMock.Verify(x => x.CommitAsync(), Times.Never);
         }
     }
 }

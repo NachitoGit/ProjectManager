@@ -20,7 +20,7 @@ namespace ProjectManager.Application.Features.Auth.Models
         public string Password { get; set; }
 
         [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        [Compare("Password", ErrorMessage = "La Contraseña y su confirmación no coinciden.")]
         public string ConfirmPassword { get; set; }
     }
 }

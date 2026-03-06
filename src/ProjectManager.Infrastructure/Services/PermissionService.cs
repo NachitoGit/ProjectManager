@@ -31,7 +31,6 @@ namespace ProjectManager.Infrastructure.Services
 
             var membership = await _unitOfWork.ProjectMembers.GetByIdsAsync(projectId, userId);
 
-            // El Owner y el Contributor pueden gestionar tareas
             return membership != null &&
                    (membership.Role == ProjectRoles.Owner || membership.Role == ProjectRoles.Contributor);
         }

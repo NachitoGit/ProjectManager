@@ -18,17 +18,14 @@ namespace ProjectManager.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // 1. Configurar la Base de Datos
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            // 2. Registrar Repositorios y Unit of Work
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<ITaskItemRepository, TaskItemRepository>();
             services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // 3. Registrar Servicios de Infraestructura
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IPermissionService, PermissionService>();
@@ -48,7 +45,7 @@ namespace ProjectManager.Infrastructure
             })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false; // Solo para desarrollo
+                options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {

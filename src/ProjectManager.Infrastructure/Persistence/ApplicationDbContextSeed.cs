@@ -31,7 +31,7 @@ namespace ProjectManager.Infrastructure.Persistence
                 var user = await userManager.FindByEmailAsync(defaultAdmin.Email);
                 if (user == null)
                 {
-                    await userManager.CreateAsync(defaultAdmin, "SecurePass123!"); // ¡Cambiar contraseña en producción!
+                    await userManager.CreateAsync(defaultAdmin, "SecurePass123!"); // Cambiar si va a producción
                     await userManager.AddToRoleAsync(defaultAdmin, Roles.Administrator);
                 }
             }

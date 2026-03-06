@@ -16,7 +16,7 @@ namespace ProjectManager.Application.Mappings
     {
         public MappingProfile()
         {
-            // COMANDOS (Input DTO/Command -> Entity)
+            // COMMANDS
             CreateMap<CreateProjectCommand, Project>();
             CreateMap<UpdateProjectCommand, Project>().ReverseMap();
             CreateMap<DeleteProjectCommand, Project>();
@@ -26,7 +26,7 @@ namespace ProjectManager.Application.Mappings
             CreateMap<UpdateTaskItemCommand, TaskItem>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
 
-            // QUERIES (Entity -> Output DTO)
+            // QUERIES
             CreateMap<Project, ProjectDetailDto>()
                 .ForMember(dest => dest.TotalTasks,
                            opt => opt.MapFrom(src => src.Tasks.Count));
@@ -45,7 +45,6 @@ namespace ProjectManager.Application.Mappings
             CreateMap<Project, ProjectDetailDto>()
                 .ForMember(dest => dest.TotalTasks,
                            opt => opt.MapFrom(src => src.Tasks.Count))
-                // El mapeo de la lista Tasks se hará automáticamente por AutoMapper
                 .ForMember(dest => dest.Tasks, opt => opt.MapFrom(src => src.Tasks));
 
 

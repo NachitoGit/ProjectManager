@@ -23,7 +23,6 @@ namespace ProjectManager.Domain.Entities
             get => _isCompleted;
             set
             {
-                // Solo dispara el evento si pasa de 'falso' a 'verdadero'
                 if (value == true && _isCompleted == false)
                 {
                     AddDomainEvent(new TaskCompletedEvent(this));

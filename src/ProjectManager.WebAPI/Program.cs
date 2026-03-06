@@ -41,7 +41,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer", // Indica que usaremos Bearer tokens
+        Scheme = "Bearer",
         Description = "Ingresa 'Bearer ' [espacio] y luego tu token. Ejemplo: Bearer eyJhbGciOi..."
     });
 
@@ -69,7 +69,7 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while seeding the database.");
     }
 }
-// **FIN DE SECCIÓN DE SEED DATA**
+// **SEED DATA**
 
 
 if (app.Environment.IsDevelopment())

@@ -30,19 +30,16 @@ namespace ProjectManager.Application.Features.ProjectMembers.Commands.AddMember
 
         public async Task<int> Handle(AddMemberCommand request, CancellationToken cancellationToken)
         {
-            // 1. OBTENER EL USUARIO ACTUAL
             var currentUserId = _currentUserService.UserId;
             if (string.IsNullOrEmpty(currentUserId))
             {
                 throw new UnauthorizedAccessException("Usuario no autenticado.");
             }
 
-            // 2. VERIFICAR SI EL PROYECTO EXISTE
             var project = await _unitOfWork.Projects.GetByIdAsync(request.ProjectId);
             if (project == null)
                 throw new NotFoundException(nameof(Project), request.ProjectId);
 
-            // 3. VALIDACIÓN DE AUTORIDAD: ¿Es el usuario actual el OWNER?
             var currentMember = await _unitOfWork.ProjectMembers.GetByIdsAsync(request.ProjectId, currentUserId);
 
             if (currentMember == null || currentMember.Role != ProjectRoles.Owner)
@@ -50,17 +47,14 @@ namespace ProjectManager.Application.Features.ProjectMembers.Commands.AddMember
                 throw new UnauthorizedAccessException("Solo el propietario del proyecto puede agregar nuevos miembros.");
             }
 
-            // 4. BUSCAR AL USUARIO QUE SE QUIERE AGREGAR
             var userToAdd = await _userManager.FindByEmailAsync(request.UserEmail);
             if (userToAdd == null)
                 throw new NotFoundException("User", request.UserEmail);
 
-            // 5. VERIFICAR SI YA ES MIEMBRO
             var existingMember = await _unitOfWork.ProjectMembers.GetByIdsAsync(request.ProjectId, userToAdd.Id);
             if (existingMember != null)
                 throw new Exception("El usuario ya es miembro de este proyecto.");
 
-            // 6. CREAR EL NUEVO MIEMBRO
             var member = new ProjectMember
             {
                 ProjectId = request.ProjectId,
