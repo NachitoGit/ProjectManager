@@ -9,13 +9,15 @@ namespace ProjectManager.WebAPI.Middlewares
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionMiddleware> _logger;
 
-        public ExceptionMiddleware(RequestDelegate next)
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext httpContext)
+        public async Task InvokeAsync(HttpContext httpContext, IHostEnvironment env)
         {
             try
             {
@@ -23,11 +25,12 @@ namespace ProjectManager.WebAPI.Middlewares
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(httpContext, ex);
+                _logger.LogError(ex, "Ha ocurrido una excepción no controlada: {Message}", ex.Message);
+                await HandleExceptionAsync(httpContext, ex, env);
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private async Task HandleExceptionAsync(HttpContext context, Exception exception, IHostEnvironment env)
         {
             context.Response.ContentType = "application/json";
             
@@ -36,48 +39,44 @@ namespace ProjectManager.WebAPI.Middlewares
 
             switch (exception)
             {
-                // 1. Errores de Validación (400)
                 case ValidationException validationEx:
                     statusCode = (int)HttpStatusCode.BadRequest;
-                    var cleanErrors = validationEx.Errors
-                        .GroupBy(e => e.PropertyName)
-                        .ToDictionary(
-                            g => g.Key,
-                            g => g.Select(e => e.ErrorMessage).ToArray()
-                        );
-
                     response = new
                     {
                         message = "Se produjeron errores de validación.",
-                        errors = cleanErrors
+                        errors = validationEx.Errors
+                            .GroupBy(e => e.PropertyName)
+                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                     };
                     break;
 
-                // 2. Errores de Recurso no encontrado (404)
                 case NotFoundException notFoundEx:
                     statusCode = (int)HttpStatusCode.NotFound;
                     response = new { message = notFoundEx.Message };
                     break;
 
-                // 3. Errores de Permisos (403)
+                case ForbiddenAccessException:
                 case UnauthorizedAccessException:
                     statusCode = (int)HttpStatusCode.Forbidden;
                     response = new { message = "No tienes permisos para realizar esta acción." };
                     break;
 
-                // 4. Todo lo demás (500)
                 default:
+                    var message = env.IsDevelopment() ? exception.Message : "Error interno del servidor.";
+                    var details = env.IsDevelopment() ? exception.StackTrace : null;
+
                     response = new
                     {
-                        message = "Error interno del servidor.",
-                        details = exception.Message // En producción, ocultar 'details'
+                        message,
+                        details
                     };
                     break;
             }
 
             context.Response.StatusCode = statusCode;
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
     }
 }
