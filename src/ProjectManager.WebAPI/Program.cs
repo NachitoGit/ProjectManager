@@ -17,6 +17,7 @@ using ProjectManager.Infrastructure;
 using ProjectManager.WebAPI.Middlewares;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using Serilog;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -24,6 +25,12 @@ System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeM
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -52,6 +59,11 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
+
+
+
 // **SEED DATA**
 using (var scope = app.Services.CreateScope())
 {
@@ -78,6 +90,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseMiddleware<ExceptionMiddleware>();
+
+try
+{
+    Log.Information("Iniciando la Web API de ProjectManager...");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "La aplicación falló al iniciar");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 app.UseHttpsRedirection();
 
