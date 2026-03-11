@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ProjectManager.Domain.Entities;
 using ProjectManager.Domain.Exceptions;
 using ProjectManager.Domain.Interfaces;
@@ -17,25 +18,37 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.UpdateTaskItem
         private readonly IMapper _mapper;
         private readonly IPermissionService _permissionService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ILogger<UpdateTaskItemCommandHandler> _logger;
 
-        public UpdateTaskItemCommandHandler (IUnitOfWork unitOfWork, IMapper mapper, IPermissionService permissionService, ICurrentUserService currentUserService)
+        public UpdateTaskItemCommandHandler 
+            (IUnitOfWork unitOfWork, 
+            IMapper mapper, 
+            IPermissionService permissionService, 
+            ICurrentUserService currentUserService, 
+            ILogger<UpdateTaskItemCommandHandler> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _permissionService = permissionService;
             _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<Unit> Handle(UpdateTaskItemCommand request, CancellationToken cancellationToken)
         {
+            var userId = _currentUserService.UserId;
+
             var taskItem = await _unitOfWork.Tasks.GetByIdAsync(request.Id);
 
             if (taskItem == null)
                 throw new NotFoundException(nameof(TaskItem), request.Id);
 
-            var isMember = await _permissionService.IsMemberAsync(taskItem.ProjectId, _currentUserService.UserId);
+            var isMember = await _permissionService.IsMemberAsync(taskItem.ProjectId, userId);
             if (!isMember)
+            {
+                _logger.LogWarning("ACCESO DENEGADO: El usuario {userId} intentó eliminar una tarea sin permisos", userId);
                 throw new UnauthorizedAccessException("No tienes permiso para editar esta tarea.");
+            }
 
             _mapper.Map(request, taskItem);
 

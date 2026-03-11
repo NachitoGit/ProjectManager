@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ProjectManager.Application.Common.Models;
 using ProjectManager.Domain.Interfaces;
 using System;
@@ -16,20 +17,30 @@ namespace ProjectManager.Application.Features.TaskItems.Queries.GetTasksList
         private readonly IMapper _mapper;
         private readonly IPermissionService _permissionService;
         private readonly ICurrentUserService _currentUserService;
-        public GetTasksListQueryHandler (IUnitOfWork unitOfWork, IMapper mapper, IPermissionService permissionService, ICurrentUserService currentUserService)
+        private readonly ILogger<GetTasksListQueryHandler> _logger;
+        public GetTasksListQueryHandler (
+            IUnitOfWork unitOfWork, 
+            IMapper mapper, 
+            IPermissionService permissionService, 
+            ICurrentUserService currentUserService,
+            ILogger<GetTasksListQueryHandler> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _permissionService = permissionService;
             _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<PaginatedResponse<TaskItemListItemDto>> Handle (GetTasksListQuery request, CancellationToken cancellationToken)
         {
-            var isMember = await _permissionService.IsMemberAsync(request.ProjectId, _currentUserService.UserId);
+            var userId = _currentUserService.UserId;
+
+            var isMember = await _permissionService.IsMemberAsync(request.ProjectId, userId);
 
             if (!isMember)
             {
+                _logger.LogWarning("ACCESO DENEGADO: El usuario {userId} intentó listar las tareas del proyecto sin permisos", userId);
                 throw new UnauthorizedAccessException("No tienes permiso para ver las tareas de este proyecto.");
             }
 

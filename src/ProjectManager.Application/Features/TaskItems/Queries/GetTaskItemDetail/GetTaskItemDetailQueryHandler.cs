@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ProjectManager.Domain.Entities;
 using ProjectManager.Domain.Exceptions;
 using ProjectManager.Domain.Interfaces;
@@ -17,17 +18,26 @@ namespace ProjectManager.Application.Features.TaskItems.Queries.GetTaskItemDetai
         private readonly IMapper _mapper;
         private readonly IPermissionService _permissionService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ILogger<GetTaskItemDetailQueryHandler> _logger;
 
-        public GetTaskItemDetailQueryHandler (IUnitOfWork unitOfWork, IMapper mapper, IPermissionService permissionService, ICurrentUserService currentUserService)
+        public GetTaskItemDetailQueryHandler (
+            IUnitOfWork unitOfWork, 
+            IMapper mapper, 
+            IPermissionService permissionService, 
+            ICurrentUserService currentUserService,
+            ILogger<GetTaskItemDetailQueryHandler> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _permissionService = permissionService;
             _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<TaskItemDetailDto> Handle (GetTaskItemDetailQuery request, CancellationToken cancellationToken)
         {
+            var userId = _currentUserService.UserId;
+
             var taskItem = await _unitOfWork.Tasks.GetByIdAsync (request.TaskItemId);
 
             if (taskItem == null)
@@ -35,10 +45,11 @@ namespace ProjectManager.Application.Features.TaskItems.Queries.GetTaskItemDetai
                 throw new NotFoundException(nameof(TaskItem), request.TaskItemId);
             }
 
-            var isMember = await _permissionService.IsMemberAsync(taskItem.ProjectId, _currentUserService.UserId);
+            var isMember = await _permissionService.IsMemberAsync(taskItem.ProjectId, userId);
 
             if (!isMember)
             {
+                _logger.LogWarning("ACCESO DENEGADO: El usuario {userId} intentó acceder a una tarea sin permisos", userId);
                 throw new UnauthorizedAccessException("No tienes permiso para ver esta tarea.");
             }
 
