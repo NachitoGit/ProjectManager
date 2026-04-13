@@ -34,8 +34,6 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.CreateTaskItem
         {
             var userId = _currentUserService.UserId;
 
-            _logger.LogInformation("Usuario {UserId} intentando crear tarea en Proyecto {ProjectId}", userId, request.ProjectId);
-
             var canManage = await _permissionService.CanManageTasksAsync(request.ProjectId, userId);
             if (!canManage)
             {
@@ -47,7 +45,7 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.CreateTaskItem
             if (projectExists == null)
             {
                 _logger.LogWarning("Proyecto {ProjectId} no encontrado para la creación de tarea", request.ProjectId);
-                throw new Exception($"El proyecto con ID {request.ProjectId} no existe.");
+                throw new NotFoundException(nameof(Project), request.ProjectId);
             }
 
             var taskItem = _mapper.Map<TaskItem>(request);

@@ -28,6 +28,7 @@ namespace ProjectManager.Application
 
             // Behaviors
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
             return services;
         }

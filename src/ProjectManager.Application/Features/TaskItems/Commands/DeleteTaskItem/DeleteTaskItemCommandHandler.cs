@@ -42,7 +42,7 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.DeleteTaskItem
             var isMember = await _permissionService.IsMemberAsync(taskItem.ProjectId, userId);
             if (!isMember) {
                 _logger.LogWarning("ACCESO DENEGADO: El usuario {userId} intentó eliminar una tarea sin permisos en el proyecto", userId);
-                throw new UnauthorizedAccessException("No tienes permiso para eliminar tareas en este proyecto.");
+                throw new ForbiddenAccessException();
             }
                 
 

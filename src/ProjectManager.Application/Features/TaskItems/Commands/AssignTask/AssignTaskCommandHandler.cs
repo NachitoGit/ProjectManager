@@ -40,7 +40,7 @@ namespace ProjectManager.Application.Features.TaskItems.Commands.AssignTask
             if (!canManage)
             {
                 _logger.LogWarning("ACCESO DENEGADO: Usuario {userId} intentó asignar a {assigneeUserId} al proyecto {projectId} sin permisos", userId, assigneeUserId, projectId);
-                throw new UnauthorizedAccessException("No tienes permiso para asignar tareas en este proyecto.");
+                throw new ForbiddenAccessException();
             }
 
             var isMember = await _permissionService.IsMemberAsync(projectId, assigneeUserId);
