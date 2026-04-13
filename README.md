@@ -22,12 +22,22 @@ Para mantener un historial de actividad sin ensuciar la lógica de negocio, impl
 * Cuando se crea una tarea o se cambia un estado, se dispara un evento.
 * Un **NotificationHandler** captura el evento y registra la actividad de forma asíncrona en una tabla de auditoría.
 
-### 2. Seguridad Transversal
+### 2. Observabilidad y Logging Estructurado
+Implementación de Serilog para una trazabilidad profesional del sistema:
+* Pipeline Behaviors: Se utiliza un LoggingBehavior en MediatR para registrar automáticamente cada Request y Response, proporcionando telemetría completa de los comandos y consultas sin duplicar código.
+* Logs de Negocio: Registro estratégico de eventos críticos (intentos de acceso denegado, errores de persistencia y flujos de seguridad).
+
+### 3. Gestión Global de Excepciones y Resiliencia
+El sistema cuenta con un Middleware de Excepciones centralizado que garantiza:
+* Respuestas Estandarizadas: Conversión de excepciones de dominio (NotFoundException, ForbiddenAccessException) en respuestas HTTP consistentes (404, 403, 400).
+* Seguridad en Producción: Filtrado de detalles técnicos sensibles hacia el cliente, manteniendo el log completo en el servidor para el equipo de desarrollo.
+
+### 4. Seguridad Transversal
 No se trata solo de estar autenticado con **JWT**. El sistema valida la propiedad de los recursos:
 * Un usuario solo puede ver o modificar tareas de proyectos donde es **miembro**.
 * Implementación de un `PermissionService` inyectado en los Handlers para validar reglas de negocio antes de ejecutar cualquier comando.
 
-### 3. Testing Automatizado
+### 5. Testing Automatizado
 Capa de pruebas unitarias robusta utilizando **xUnit**, **Moq** y **FluentAssertions**.
 * Cobertura de "Happy Paths" y casos de error (seguridad y validación).
 * Uso de Mocks para aislar la lógica de aplicación de la base de datos y servicios de identidad.
@@ -36,6 +46,7 @@ Capa de pruebas unitarias robusta utilizando **xUnit**, **Moq** y **FluentAssert
 * **.NET 8**
 * **Entity Framework Core** (SQL Server)
 * **MediatR** (CQRS & Domain Events)
+* **Serilog** (Structured Logging)
 * **AutoMapper** (Mapeo de objetos)
 * **FluentValidation** (Validación de entrada)
 * **xUnit & Moq** (Unit Testing)
